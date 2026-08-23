@@ -3,20 +3,41 @@
 #include "display/screens/screen_draw.h"
 #include "display/screens/screen_layout.h"
 
+#if IS_ZMK
+#include <zmk/display.h>
+#include <zephyr/sys/atomic.h>
+#endif
+
 static lv_color_t canvas_buf[SCREEN_VER * SCREEN_HOR];
 static lv_obj_t *status_canvas = NULL; 
+#if IS_ZMK
+static atomic_t needs_redraw;
+#else
 static bool needs_redraw = false;
+#endif
 
 void screen_set_needs_redraw(void) {
+#if IS_ZMK
+    atomic_set(&needs_redraw, 1);
+#else
     needs_redraw = true;
+#endif
 }
 
 bool screen_needs_redraw(void) {
+#if IS_ZMK
+    return atomic_get(&needs_redraw);
+#else
     return needs_redraw;
+#endif
 }
 
 void screen_clear_redraw_flag(void) {
+#if IS_ZMK
+    atomic_clear(&needs_redraw);
+#else
     needs_redraw = false;
+#endif
 }
 
 lv_obj_t *screen_display(void) {
@@ -35,7 +56,7 @@ lv_obj_t *screen_display(void) {
     return screen;
 }
 
-void screen_update(void) {
+static void screen_redraw(void) {
     if (status_canvas == NULL) return;
     
     if (screen_needs_redraw()) {
@@ -48,6 +69,23 @@ void screen_update(void) {
 #endif
         screen_clear_redraw_flag();
     }
+}
+
+#if IS_ZMK
+static void screen_redraw_work_cb(struct k_work *work) {
+    (void)work;
+    screen_redraw();
+}
+
+K_WORK_DEFINE(screen_redraw_work, screen_redraw_work_cb);
+#endif
+
+void screen_update(void) {
+#if IS_ZMK
+    k_work_submit_to_queue(zmk_display_work_q(), &screen_redraw_work);
+#else
+    screen_redraw();
+#endif
 }
 
 void screen_init(void) {

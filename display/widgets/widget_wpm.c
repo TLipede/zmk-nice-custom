@@ -6,6 +6,10 @@
 #include "display/util.h"
 #include "display/widgets/widget_wpm.h"
 
+#if IS_ZMK
+#include <zephyr/sys/atomic.h>
+#endif
+
 LV_IMG_DECLARE(wpm);
 LV_IMG_DECLARE(luna_sit_1);
 LV_IMG_DECLARE(luna_sit_2);
@@ -35,14 +39,24 @@ static struct {
     uint8_t frame;
     enum luna_gait gait;
     bool sneaking;
+    bool jumping;
+    uint32_t jump_until;
     lv_timer_t *timer;
 } wpm_data = {
     .value = 0,
     .frame = 0,
     .gait = LUNA_SIT,
     .sneaking = false,
+    .jumping = false,
+    .jump_until = 0,
     .timer = NULL,
 };
+
+#if IS_ZMK
+static atomic_t jump_requested;
+#else
+static bool jump_requested;
+#endif
 
 static enum luna_gait gait_for_wpm(uint8_t wpm) {
     if (wpm < LUNA_WALK_WPM) return LUNA_SIT;
@@ -62,7 +76,7 @@ static void update_gait(void) {
     wpm_data.frame = 0;
     if (wpm_data.timer == NULL) return;
 
-    if (gait == LUNA_SIT) {
+    if (gait == LUNA_SIT && !wpm_data.jumping) {
         lv_timer_pause(wpm_data.timer);
     } else {
         lv_timer_resume(wpm_data.timer);
@@ -71,7 +85,12 @@ static void update_gait(void) {
 
 static void frame_timer_cb(lv_timer_t *timer) {
     (void)timer;
-    wpm_data.frame ^= 1;
+    if (wpm_data.jumping && (int32_t)(lv_tick_get() - wpm_data.jump_until) >= 0) {
+        wpm_data.jumping = false;
+        if (wpm_data.gait == LUNA_SIT) lv_timer_pause(wpm_data.timer);
+    } else if (wpm_data.gait != LUNA_SIT) {
+        wpm_data.frame ^= 1;
+    }
     screen_set_needs_redraw();
     screen_update();
 }
@@ -94,11 +113,32 @@ void widget_wpm_update_layer(uint8_t layer) {
     update_gait();
 }
 
+void widget_wpm_trigger_jump(void) {
+#if IS_ZMK
+    atomic_set(&jump_requested, 1);
+#else
+    jump_requested = true;
+#endif
+}
+
 void widget_wpm_draw(lv_obj_t *canvas, int16_t v) {
     lv_draw_img_dsc_t img_dsc;
     lv_draw_img_dsc_init(&img_dsc);
 
-    pos_t pos_luna = coordinates_from_vh(v + 24, (SCREEN_HOR - 32) / 2);
+#if IS_ZMK
+    bool start_jump = atomic_cas(&jump_requested, 1, 0);
+#else
+    bool start_jump = jump_requested;
+    jump_requested = false;
+#endif
+    if (start_jump) {
+        wpm_data.jumping = true;
+        wpm_data.jump_until = lv_tick_get() + LUNA_JUMP_MS;
+        lv_timer_resume(wpm_data.timer);
+    }
+
+    int16_t luna_v = v + 24 - (wpm_data.jumping ? LUNA_JUMP_PIXELS : 0);
+    pos_t pos_luna = coordinates_from_vh(luna_v, (SCREEN_HOR - 32) / 2);
     lv_canvas_draw_img(canvas, pos_luna.x, pos_luna.y,
                        luna_frames[wpm_data.gait][wpm_data.frame], &img_dsc);
 

@@ -7,6 +7,7 @@
 void widget_wpm_init(uint8_t initial_wpm);
 void widget_wpm_update(uint8_t wpm);
 void widget_wpm_update_layer(uint8_t layer);
+void widget_wpm_trigger_jump(void);
 void widget_wpm_draw(lv_obj_t *canvas, int16_t v);
 
 #endif

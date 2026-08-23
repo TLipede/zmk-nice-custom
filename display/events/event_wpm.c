@@ -7,6 +7,7 @@
 #if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 
 #include <zmk/events/wpm_state_changed.h>
+#include <zmk/events/keycode_state_changed.h>
 #include <zmk/wpm.h>
 
 static int wpm_listener(const zmk_event_t *eh) {
@@ -20,6 +21,21 @@ static int wpm_listener(const zmk_event_t *eh) {
 
 ZMK_LISTENER(wpm_listener, wpm_listener);
 ZMK_SUBSCRIPTION(wpm_listener, zmk_wpm_state_changed);
+
+static int luna_jump_listener(const zmk_event_t *eh) {
+    const struct zmk_keycode_state_changed *ev = as_zmk_keycode_state_changed(eh);
+    if (ev->state && ev->usage_page == HID_USAGE_KEY &&
+        ev->keycode == HID_USAGE_KEY_KEYBOARD_SPACEBAR) {
+        widget_wpm_trigger_jump();
+        screen_set_needs_redraw();
+        screen_update();
+    }
+
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(luna_jump_listener, luna_jump_listener);
+ZMK_SUBSCRIPTION(luna_jump_listener, zmk_keycode_state_changed);
 
 void event_wpm_init(void) {
     uint8_t wpm = zmk_wpm_get_state();

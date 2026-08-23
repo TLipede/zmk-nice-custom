@@ -36,9 +36,11 @@ typedef struct {
 } display_config_t;
 
 // USER CONFIGURATION - Edit this section
-#define LUNA_WALK_WPM 15
-#define LUNA_RUN_WPM 70
+#define LUNA_WALK_WPM 5
+#define LUNA_RUN_WPM 35
 #define LUNA_FRAME_MS 200
+#define LUNA_JUMP_MS 400
+#define LUNA_JUMP_PIXELS 8
 #define LUNA_SNEAK_LAYER 5
 
 #if LUNA_WALK_WPM >= LUNA_RUN_WPM
