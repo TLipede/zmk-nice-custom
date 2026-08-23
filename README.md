@@ -41,6 +41,12 @@ customization is possible via a config file `/display/display_config.h`. The fil
 _for the `miryoku_zmk` repo use the `Build Inputs` action and specify aboves parameters in the build options besides your other configs._
 
 
+## Testing
+
+Run `sh tests/run.sh` with a C compiler installed. The host test covers Luna's WPM thresholds,
+mouse-layer sneak state, and jump landing timer.
+
+
 ## Extension
 
 this repo is build to with modularity in mind. A widget consists out of drawing the widget, related events and possibly relaying them, as well as assets that go along with the widget. Since all files follow similar structures, use the included widgets, events, etc as examples. No Modifications to the Makefile, etc should be required.
