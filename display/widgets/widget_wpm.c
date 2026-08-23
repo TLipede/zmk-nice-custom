@@ -40,16 +40,16 @@ static struct {
     enum luna_gait gait;
     bool sneaking;
     bool jumping;
-    uint32_t jump_until;
     lv_timer_t *timer;
+    lv_timer_t *jump_timer;
 } wpm_data = {
     .value = 0,
     .frame = 0,
     .gait = LUNA_SIT,
     .sneaking = false,
     .jumping = false,
-    .jump_until = 0,
     .timer = NULL,
+    .jump_timer = NULL,
 };
 
 #if IS_ZMK
@@ -76,7 +76,7 @@ static void update_gait(void) {
     wpm_data.frame = 0;
     if (wpm_data.timer == NULL) return;
 
-    if (gait == LUNA_SIT && !wpm_data.jumping) {
+    if (gait == LUNA_SIT) {
         lv_timer_pause(wpm_data.timer);
     } else {
         lv_timer_resume(wpm_data.timer);
@@ -85,12 +85,14 @@ static void update_gait(void) {
 
 static void frame_timer_cb(lv_timer_t *timer) {
     (void)timer;
-    if (wpm_data.jumping && (int32_t)(lv_tick_get() - wpm_data.jump_until) >= 0) {
-        wpm_data.jumping = false;
-        if (wpm_data.gait == LUNA_SIT) lv_timer_pause(wpm_data.timer);
-    } else if (wpm_data.gait != LUNA_SIT) {
-        wpm_data.frame ^= 1;
-    }
+    wpm_data.frame ^= 1;
+    screen_set_needs_redraw();
+    screen_update();
+}
+
+static void jump_timer_cb(lv_timer_t *timer) {
+    wpm_data.jumping = false;
+    lv_timer_pause(timer);
     screen_set_needs_redraw();
     screen_update();
 }
@@ -98,6 +100,8 @@ static void frame_timer_cb(lv_timer_t *timer) {
 void widget_wpm_init(uint8_t initial_wpm) {
     wpm_data.timer = lv_timer_create(frame_timer_cb, LUNA_FRAME_MS, NULL);
     lv_timer_pause(wpm_data.timer);
+    wpm_data.jump_timer = lv_timer_create(jump_timer_cb, LUNA_JUMP_MS, NULL);
+    lv_timer_pause(wpm_data.jump_timer);
     wpm_data.value = initial_wpm;
     wpm_data.gait = current_gait();
     if (wpm_data.gait != LUNA_SIT) lv_timer_resume(wpm_data.timer);
@@ -133,8 +137,8 @@ void widget_wpm_draw(lv_obj_t *canvas, int16_t v) {
 #endif
     if (start_jump) {
         wpm_data.jumping = true;
-        wpm_data.jump_until = lv_tick_get() + LUNA_JUMP_MS;
-        lv_timer_resume(wpm_data.timer);
+        lv_timer_reset(wpm_data.jump_timer);
+        lv_timer_resume(wpm_data.jump_timer);
     }
 
     int16_t luna_v = v + 24 - (wpm_data.jumping ? LUNA_JUMP_PIXELS : 0);
