@@ -38,7 +38,7 @@ typedef struct {
 // USER CONFIGURATION - Edit this section
 #define LUNA_WALK_WPM 5
 #define LUNA_RUN_WPM 35
-#define LUNA_FRAME_MS 200
+#define LUNA_FRAME_MS 100
 #define LUNA_JUMP_MS 100
 #define LUNA_JUMP_PIXELS 8
 #define LUNA_SNEAK_LAYER 5

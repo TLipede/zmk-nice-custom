@@ -87,14 +87,14 @@ static void frame_timer_cb(lv_timer_t *timer) {
     (void)timer;
     wpm_data.frame ^= 1;
     screen_set_needs_redraw();
-    screen_update();
+    screen_update_now();
 }
 
 static void jump_timer_cb(lv_timer_t *timer) {
     wpm_data.jumping = false;
     lv_timer_pause(timer);
     screen_set_needs_redraw();
-    screen_update();
+    screen_update_now();
 }
 
 void widget_wpm_init(uint8_t initial_wpm) {

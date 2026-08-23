@@ -10,6 +10,7 @@ void screen_clear_redraw_flag(void);
 
 lv_obj_t *screen_display(void);
 void screen_update(void);
+void screen_update_now(void);
 void screen_init(void);
 
 

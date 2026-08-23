@@ -88,6 +88,10 @@ void screen_update(void) {
 #endif
 }
 
+void screen_update_now(void) {
+    screen_redraw();
+}
+
 void screen_init(void) {
 #if LEFT_DISPLAY
     screen_init_events_left();

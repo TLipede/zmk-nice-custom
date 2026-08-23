@@ -23,6 +23,7 @@ static struct {
     const void *image;
 } first_draw;
 static bool captured_draw;
+static uint8_t immediate_updates;
 
 const lv_img_dsc_t wpm = {.id = 1};
 const lv_img_dsc_t luna_sit_1 = {.id = 2};
@@ -89,6 +90,7 @@ void draw_number(lv_obj_t *canvas, uint8_t number, pos_t pos) {
 
 void screen_set_needs_redraw(void) {}
 void screen_update(void) {}
+void screen_update_now(void) { immediate_updates++; }
 
 static void draw_luna(const lv_img_dsc_t *expected_image, int16_t expected_x) {
     captured_draw = false;
@@ -106,8 +108,12 @@ int main(void) {
 
     widget_wpm_update(LUNA_WALK_WPM);
     draw_luna(&luna_walk_1, ground_x);
-    widget_wpm_update(LUNA_RUN_WPM - 1);
+    advance_timers(LUNA_FRAME_MS - 1);
     draw_luna(&luna_walk_1, ground_x);
+    advance_timers(1);
+    draw_luna(&luna_walk_2, ground_x);
+    widget_wpm_update(LUNA_RUN_WPM - 1);
+    draw_luna(&luna_walk_2, ground_x);
     widget_wpm_update(LUNA_RUN_WPM);
     draw_luna(&luna_run_1, ground_x);
 
@@ -117,11 +123,14 @@ int main(void) {
     draw_luna(&luna_run_1, ground_x);
 
     widget_wpm_update(0);
+    immediate_updates = 0;
     widget_wpm_trigger_jump();
     draw_luna(&luna_sit_1, ground_x + LUNA_JUMP_PIXELS);
     advance_timers(LUNA_JUMP_MS - 1);
     draw_luna(&luna_sit_1, ground_x + LUNA_JUMP_PIXELS);
+    assert(immediate_updates == 0);
     advance_timers(1);
+    assert(immediate_updates == 1);
     draw_luna(&luna_sit_1, ground_x);
 
     puts("Luna state tests passed");
