@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include "display/common.h"
 #include "display/display_config.h"
 #include "display/screens/screen_draw.h"
@@ -11,28 +13,34 @@ LV_IMG_DECLARE(luna_walk_1);
 LV_IMG_DECLARE(luna_walk_2);
 LV_IMG_DECLARE(luna_run_1);
 LV_IMG_DECLARE(luna_run_2);
+LV_IMG_DECLARE(luna_sneak_1);
+LV_IMG_DECLARE(luna_sneak_2);
 
 enum luna_gait {
     LUNA_SIT,
     LUNA_WALK,
     LUNA_RUN,
+    LUNA_SNEAK,
 };
 
 static const lv_img_dsc_t *const luna_frames[][2] = {
     {&luna_sit_1, &luna_sit_2},
     {&luna_walk_1, &luna_walk_2},
     {&luna_run_1, &luna_run_2},
+    {&luna_sneak_1, &luna_sneak_2},
 };
 
 static struct {
     uint8_t value;
     uint8_t frame;
     enum luna_gait gait;
+    bool sneaking;
     lv_timer_t *timer;
 } wpm_data = {
     .value = 0,
     .frame = 0,
     .gait = LUNA_SIT,
+    .sneaking = false,
     .timer = NULL,
 };
 
@@ -40,6 +48,25 @@ static enum luna_gait gait_for_wpm(uint8_t wpm) {
     if (wpm < LUNA_WALK_WPM) return LUNA_SIT;
     if (wpm < LUNA_RUN_WPM) return LUNA_WALK;
     return LUNA_RUN;
+}
+
+static enum luna_gait current_gait(void) {
+    return wpm_data.sneaking ? LUNA_SNEAK : gait_for_wpm(wpm_data.value);
+}
+
+static void update_gait(void) {
+    enum luna_gait gait = current_gait();
+    if (gait == wpm_data.gait) return;
+
+    wpm_data.gait = gait;
+    wpm_data.frame = 0;
+    if (wpm_data.timer == NULL) return;
+
+    if (gait == LUNA_SIT) {
+        lv_timer_pause(wpm_data.timer);
+    } else {
+        lv_timer_resume(wpm_data.timer);
+    }
 }
 
 static void frame_timer_cb(lv_timer_t *timer) {
@@ -52,21 +79,19 @@ static void frame_timer_cb(lv_timer_t *timer) {
 void widget_wpm_init(uint8_t initial_wpm) {
     wpm_data.timer = lv_timer_create(frame_timer_cb, LUNA_FRAME_MS, NULL);
     lv_timer_pause(wpm_data.timer);
-    widget_wpm_update(initial_wpm);
+    wpm_data.value = initial_wpm;
+    wpm_data.gait = current_gait();
+    if (wpm_data.gait != LUNA_SIT) lv_timer_resume(wpm_data.timer);
 }
 
 void widget_wpm_update(uint8_t wpm) {
     wpm_data.value = wpm;
-    enum luna_gait gait = gait_for_wpm(wpm);
-    if (gait == wpm_data.gait) return;
+    update_gait();
+}
 
-    wpm_data.gait = gait;
-    wpm_data.frame = 0;
-    if (gait == LUNA_SIT) {
-        lv_timer_pause(wpm_data.timer);
-    } else {
-        lv_timer_resume(wpm_data.timer);
-    }
+void widget_wpm_update_layer(uint8_t layer) {
+    wpm_data.sneaking = layer == LUNA_SNEAK_LAYER;
+    update_gait();
 }
 
 void widget_wpm_draw(lv_obj_t *canvas, int16_t v) {

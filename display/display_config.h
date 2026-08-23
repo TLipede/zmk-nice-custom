@@ -39,6 +39,7 @@ typedef struct {
 #define LUNA_WALK_WPM 15
 #define LUNA_RUN_WPM 70
 #define LUNA_FRAME_MS 200
+#define LUNA_SNEAK_LAYER 5
 
 #if LUNA_WALK_WPM >= LUNA_RUN_WPM
 #error "LUNA_WALK_WPM must be lower than LUNA_RUN_WPM"

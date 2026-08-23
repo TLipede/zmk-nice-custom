@@ -8,7 +8,7 @@ display.
 ## Widgets
 
 - Layer indicator - Shows current Miryoku layer (BSE, MED, TAP, BTN, NAV, MSE, SYM, NUM, FKT)
-- WPM counter with Luna sit/walk/run animation (central screen only)
+- WPM counter with Luna sit/walk/run animation and mouse-layer sneak (central screen only)
 - Battery status - Percentage and charging indicator (both screens)
 - Connection status - USB or Bluetooth with profile number (left screen only)
 - Custom logos - Miryoku logo (right) and custom logo (left)
