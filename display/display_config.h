@@ -36,12 +36,20 @@ typedef struct {
 } display_config_t;
 
 // USER CONFIGURATION - Edit this section
+#define LUNA_WALK_WPM 15
+#define LUNA_RUN_WPM 70
+#define LUNA_FRAME_MS 200
+
+#if LUNA_WALK_WPM >= LUNA_RUN_WPM
+#error "LUNA_WALK_WPM must be lower than LUNA_RUN_WPM"
+#endif
+
 #define LEFT_SCREEN_CONFIG { \
     .widgets = { \
         {WIDGET_BATTERY,          .enabled = true,  .v_position = PADDING+2}, \
         {WIDGET_SIGNAL,           .enabled = true,  .v_position = PADDING+2+15}, \
         {WIDGET_LAYER_INDICATOR,  .enabled = true,  .v_position = 80}, \
-        {WIDGET_WPM,              .enabled = true,  .v_position = SCREEN_VER-15}, \
+        {WIDGET_WPM,              .enabled = true,  .v_position = SCREEN_VER-48}, \
     }, \
     .widget_count = 4 \
 }

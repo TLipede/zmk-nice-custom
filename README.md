@@ -8,7 +8,7 @@ display.
 ## Widgets
 
 - Layer indicator - Shows current Miryoku layer (BSE, MED, TAP, BTN, NAV, MSE, SYM, NUM, FKT)
-- WPM counter - Real-time typing speed (right screen only)
+- WPM counter with Luna sit/walk/run animation (central screen only)
 - Battery status - Percentage and charging indicator (both screens)
 - Connection status - USB or Bluetooth with profile number (left screen only)
 - Custom logos - Miryoku logo (right) and custom logo (left)
@@ -22,6 +22,7 @@ customization is possible via a config file `/display/display_config.h`. The fil
 - Selection of the widgets to show
 - Vertical positioning of the widgets on the screen
 - Placement of widgets independent of split keyboard side
+- Luna WPM thresholds and animation speed
 
 
 ## Hardware Requirements
